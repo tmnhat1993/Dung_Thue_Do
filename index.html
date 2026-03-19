@@ -410,22 +410,21 @@
 // ────────────────────────────────────────────
 //  CONFIG
 // ────────────────────────────────────────────
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyvmU8pmbq7Zee4c7P-UCrNDY8N0yqIgNv0H3upUUQPxL80mAE632kt6SNRx8ETqwk/exec';
 const STORAGE_KEY = 'cosplay_sheet_url';
 
 function getSheetUrl() {
-  const saved = localStorage.getItem(STORAGE_KEY) || '';
   const input = document.getElementById('sheetUrl');
-  if (saved && !input.value) input.value = saved;
-  return input.value.trim();
+  return input.value.trim() || DEFAULT_URL;
 }
 
 document.getElementById('sheetUrl').addEventListener('change', function() {
   localStorage.setItem(STORAGE_KEY, this.value.trim());
 });
-// Restore saved URL
+// Restore saved URL, fallback to default
 (function() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) document.getElementById('sheetUrl').value = saved;
+  document.getElementById('sheetUrl').value = saved || DEFAULT_URL;
 })();
 
 // ────────────────────────────────────────────

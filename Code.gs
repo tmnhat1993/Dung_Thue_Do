@@ -5,23 +5,26 @@
 // ============================================================
 
 // ⚠️ THAY GIÁ TRỊ NÀY THÀNH ID CỦA GOOGLE SHEET CỦA BẠN
-const SHEET_ID = 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE';
+const SHEET_ID = "PASTE_YOUR_GOOGLE_SHEET_ID_HERE";
 
 // Tên sheet chứa data thuê đồ (tab ở dưới cùng của Google Sheet)
-const SHEET_NAME = 'Thuê đồ';
+const SHEET_NAME = "THÔNG TIN";
 
 // ============================================================
 //  GET — Xử lý request GET (tra cứu lịch)
 // ============================================================
 function doGet(e) {
-  const action = e.parameter.action || '';
+  const action = e.parameter.action || "";
 
-  if (action === 'getSchedule') {
+  if (action === "getSchedule") {
     return handleGetSchedule(e);
   }
 
   // Mặc định: trả về thông tin kiểm tra kết nối
-  return jsonResponse({ status: 'ok', message: 'Cosplay Rental API đang hoạt động ✅' });
+  return jsonResponse({
+    status: "ok",
+    message: "Cosplay Rental API đang hoạt động ✅",
+  });
 }
 
 // ============================================================
@@ -33,34 +36,33 @@ function doPost(e) {
     const rows = payload.rows;
 
     if (!rows || !Array.isArray(rows)) {
-      return jsonResponse({ status: 'error', message: 'Dữ liệu không hợp lệ' });
+      return jsonResponse({ status: "error", message: "Dữ liệu không hợp lệ" });
     }
 
     const sheet = getSheet();
     const inserted = [];
 
-    rows.forEach(row => {
+    rows.forEach((row) => {
       const newRow = [
-        row.colA || '',   // Cột A: Tên khách
-        '',               // Cột B: (để trống)
-        '',               // Cột C: (để trống)
-        row.colD || '0',  // Cột D: Cọc
-        row.colE || '',   // Cột E: Ngày thuê
-        row.colF || '',   // Cột F: Tên đồ
-        row.colG || '',   // Cột G: Ghi chú
+        row.colA || "", // Cột A: Tên khách
+        "", // Cột B: (để trống)
+        "", // Cột C: (để trống)
+        row.colD || "0", // Cột D: Cọc
+        row.colE || "", // Cột E: Ngày thuê
+        row.colF || "", // Cột F: Tên đồ
+        row.colG || "", // Cột G: Ghi chú
       ];
       sheet.appendRow(newRow);
       inserted.push(newRow);
     });
 
     return jsonResponse({
-      status: 'success',
+      status: "success",
       inserted: inserted.length,
-      message: `Đã thêm ${inserted.length} dòng thành công`
+      message: `Đã thêm ${inserted.length} dòng thành công`,
     });
-
   } catch (err) {
-    return jsonResponse({ status: 'error', message: err.toString() });
+    return jsonResponse({ status: "error", message: err.toString() });
   }
 }
 
@@ -69,18 +71,21 @@ function doPost(e) {
 // ============================================================
 function handleGetSchedule(e) {
   try {
-    const fromStr = e.parameter.from || ''; // dd/mm/yyyy
-    const toStr   = e.parameter.to   || ''; // dd/mm/yyyy
+    const fromStr = e.parameter.from || ""; // dd/mm/yyyy
+    const toStr = e.parameter.to || ""; // dd/mm/yyyy
 
     if (!fromStr || !toStr) {
-      return jsonResponse({ status: 'error', message: 'Thiếu tham số from/to' });
+      return jsonResponse({
+        status: "error",
+        message: "Thiếu tham số from/to",
+      });
     }
 
     const fromDate = parseSheetDate(fromStr);
-    const toDate   = parseSheetDate(toStr);
+    const toDate = parseSheetDate(toStr);
 
     const sheet = getSheet();
-    const data  = sheet.getDataRange().getValues();
+    const data = sheet.getDataRange().getValues();
 
     // Hàng 1 là header, bỏ qua
     const rows = [];
@@ -101,11 +106,11 @@ function handleGetSchedule(e) {
       if (!rowDate) continue;
       if (rowDate >= fromDate && rowDate <= toDate) {
         rows.push({
-          colA: row[0] || '',
-          colD: row[3] || '',
+          colA: row[0] || "",
+          colD: row[3] || "",
           colE: formatDateForUI(rowDate),
-          colF: row[5] || '',
-          colG: row[6] || '',
+          colF: row[5] || "",
+          colG: row[6] || "",
         });
       }
     }
@@ -115,10 +120,9 @@ function handleGetSchedule(e) {
       return parseSheetDate(a.colE) - parseSheetDate(b.colE);
     });
 
-    return jsonResponse({ status: 'success', rows });
-
+    return jsonResponse({ status: "success", rows });
   } catch (err) {
-    return jsonResponse({ status: 'error', message: err.toString() });
+    return jsonResponse({ status: "error", message: err.toString() });
   }
 }
 
@@ -132,7 +136,15 @@ function getSheet() {
   if (!sheet) {
     // Tự tạo sheet nếu chưa có
     sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(['Tên khách', '', '', 'Cọc', 'Ngày thuê', 'Tên đồ', 'Ghi chú']);
+    sheet.appendRow([
+      "Tên khách",
+      "",
+      "",
+      "Cọc",
+      "Ngày thuê",
+      "Tên đồ",
+      "Ghi chú",
+    ]);
   }
   return sheet;
 }
@@ -143,7 +155,7 @@ function getSheet() {
 function parseSheetDate(str) {
   if (!str) return null;
   str = String(str).trim();
-  const parts = str.split('/');
+  const parts = str.split("/");
   if (parts.length < 3) return null;
   const d = parseInt(parts[0], 10);
   const m = parseInt(parts[1], 10) - 1;
@@ -156,8 +168,8 @@ function parseSheetDate(str) {
  * Format Date → "dd/mm/yyyy" for front-end display
  */
 function formatDateForUI(date) {
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, "0");
   const y = date.getFullYear();
   return `${d}/${m}/${y}`;
 }
