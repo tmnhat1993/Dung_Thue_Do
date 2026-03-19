@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cosplay Rental Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: #2a2a3e;
+      --accent: #c084fc;
+      --accent2: #f0abfc;
+      --accent3: #818cf8;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --success: #34d399;
+      --error: #f87171;
+      --warn: #fbbf24;
+      --pink: #f472b6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(192,132,252,.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(129,140,248,.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 16px; }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,15,.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-inner {
+      max-width: 900px; margin: 0 auto; padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .logo {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-weight: 900; font-size: 18px; letter-spacing: -.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo span { font-weight: 300; opacity: .6; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 4px;
+      background: var(--surface); border-radius: 10px; padding: 4px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      padding: 7px 16px; border-radius: 7px; border: none; cursor: pointer;
+      font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 500;
+      transition: all .2s; color: var(--text-muted); background: transparent;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      color: #fff; box-shadow: 0 2px 12px rgba(192,132,252,.35);
+    }
+
+    /* Tab panels */
+    .tab-panel { display: none; padding: 28px 0 48px; }
+    .tab-panel.active { display: block; }
+
+    /* Section heading */
+    .section-title {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 22px; font-weight: 700; margin-bottom: 6px;
+    }
+    .section-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+
+    /* Config bar */
+    .config-bar {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .config-bar label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .config-input {
+      flex: 1; min-width: 220px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 14px; color: var(--text); font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      transition: border-color .2s;
+    }
+    .config-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Entry blocks */
+    .entries-wrapper { display: flex; flex-direction: column; gap: 16px; }
+
+    .entry-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+      animation: slideIn .25s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+    .entry-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    }
+    .entry-num {
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .entry-remove {
+      background: none; border: none; cursor: pointer; color: var(--text-muted);
+      font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+      transition: color .15s; display: flex; align-items: center;
+    }
+    .entry-remove:hover { color: var(--error); }
+
+    .entry-textarea {
+      width: 100%; min-height: 140px; background: transparent; border: none;
+      padding: 16px; color: var(--text); font-size: 14px; resize: vertical;
+      font-family: 'Noto Sans JP', sans-serif; line-height: 1.7;
+    }
+    .entry-textarea:focus { outline: none; }
+    .entry-textarea::placeholder { color: var(--text-muted); font-size: 13px; }
+
+    /* Preview */
+    .entry-preview {
+      border-top: 1px solid var(--border); padding: 12px 16px;
+      font-size: 12px; color: var(--text-muted);
+      display: none; flex-wrap: wrap; gap: 8px;
+    }
+    .entry-preview.visible { display: flex; }
+    .preview-chip {
+      background: rgba(192,132,252,.1); border: 1px solid rgba(192,132,252,.25);
+      border-radius: 6px; padding: 3px 10px; color: var(--accent2);
+    }
+    .preview-chip strong { color: var(--text); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;
+      font-family: 'Noto Sans JP', sans-serif; font-size: 14px; font-weight: 500;
+      transition: all .2s; text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      color: #fff; box-shadow: 0 2px 16px rgba(192,132,252,.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 24px rgba(192,132,252,.45); }
+    .btn-secondary {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.3); color: var(--error); }
+    .btn-danger:hover { background: rgba(248,113,113,.2); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
+    .btn-icon { font-size: 16px; }
+
+    .action-row {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; align-items: center;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 22px; font-size: 14px; z-index: 999;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5); opacity: 0;
+      transition: all .3s; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: var(--success); color: var(--success); }
+    #toast.error { border-color: var(--error); color: var(--error); }
+    #toast.info { border-color: var(--accent); color: var(--accent); }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== CALENDAR TAB ===== */
+    .cal-controls {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .date-input {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 16px; color: var(--text); font-size: 14px;
+      font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+    }
+    .date-input:focus { outline: none; border-color: var(--accent); }
+    .week-label {
+      font-size: 13px; color: var(--text-muted);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px;
+    }
+
+    /* Schedule flat table */
+    .schedule-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+
+    .schedule-meta {
+      padding: 20px 24px 16px; text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .schedule-meta-title {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 16px; font-weight: 900; letter-spacing: .5px;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .schedule-meta-range {
+      font-size: 13px; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .schedule-meta-count {
+      font-size: 13px; color: var(--text-muted);
+    }
+    .schedule-meta-count strong { color: var(--accent); font-weight: 700; }
+
+    .schedule-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .schedule-table thead tr {
+      background: rgba(192,132,252,.06);
+    }
+    .schedule-table thead th {
+      padding: 10px 18px; font-size: 11px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px;
+      text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .schedule-table thead th:not(:last-child) { border-right: 1px solid var(--border); }
+
+    .schedule-table tbody tr { border-bottom: 1px solid var(--border); }
+    .schedule-table tbody tr:last-child { border-bottom: none; }
+    .schedule-table tbody tr:hover { background: rgba(192,132,252,.04); }
+
+    .schedule-table td {
+      padding: 12px 18px; font-size: 13px; vertical-align: top; line-height: 1.6;
+    }
+    .schedule-table td:not(:last-child) { border-right: 1px solid var(--border); }
+
+    .td-date {
+      white-space: nowrap; font-weight: 600;
+      color: var(--accent); width: 140px;
+    }
+    .td-name { font-weight: 600; color: var(--text); width: 160px; }
+    .td-detail { color: var(--text); }
+    .detail-item { color: var(--accent3); font-weight: 500; }
+    .detail-note { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+    .empty-table {
+      text-align: center; padding: 40px !important;
+      color: var(--text-muted); font-size: 14px;
+    }
+
+    .loading-state {
+      display: flex; align-items: center; gap: 10px; justify-content: center;
+      padding: 48px; color: var(--text-muted); font-size: 14px;
+    }
+    .loading-state .spinner { border-color: rgba(192,132,252,.3); border-top-color: var(--accent); }
+
+    /* Export button area */
+    .export-bar {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;
+    }
+
+    /* Confirm dialog */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px); z-index: 200; display: none;
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .dialog {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px; max-width: 400px; width: 90%;
+      animation: slideIn .2s ease;
+    }
+    .dialog h3 { font-size: 18px; margin-bottom: 10px; }
+    .dialog p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6; }
+    .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .logo { font-size: 15px; }
+      .tab-btn { padding: 6px 12px; font-size: 12px; }
+      .td-date { width: 100px; font-size: 12px; }
+      .td-name { width: 110px; }
+      .schedule-table thead th,
+      .schedule-table td { padding: 10px 12px; }
+      .section-title { font-size: 18px; }
+      .config-bar { flex-direction: column; align-items: stretch; }
+      .config-input { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">Cosplay <span>Rental</span></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="submit">📋 Nhập liệu</button>
+      <button class="tab-btn" data-tab="calendar">📅 Lịch slot</button>
+    </div>
+  </div>
+</header>
+
+<!-- ======================== SUBMIT TAB ======================== -->
+<div class="tab-panel active" id="tab-submit">
+  <div class="container">
+    <div class="section-title">Nhập liệu thuê đồ</div>
+    <p class="section-sub">Paste data từng slot vào ô bên dưới. Mỗi ô là một đơn thuê riêng.</p>
+
+    <div class="config-bar">
+      <label>🔗 Google Sheet Web App URL</label>
+      <input class="config-input" id="sheetUrl" type="text"
+        placeholder="https://script.google.com/macros/s/…/exec"
+        value="" />
+    </div>
+
+    <div class="entries-wrapper" id="entriesWrapper">
+      <!-- entry blocks injected here -->
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-secondary" id="addEntryBtn">
+        <span class="btn-icon">＋</span> Thêm slot
+      </button>
+      <button class="btn btn-primary" id="submitAllBtn">
+        <span class="btn-icon">🚀</span> Gửi lên Google Sheet
+      </button>
+      <button class="btn btn-danger" id="clearAllBtn" style="margin-left:auto;">
+        🗑 Xoá tất cả
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== CALENDAR TAB ======================== -->
+<div class="tab-panel" id="tab-calendar">
+  <div class="container">
+    <div class="section-title">Lịch slot theo tuần</div>
+    <p class="section-sub">Chọn ngày để xem lịch thuê đồ từ Thứ 2 → Chủ nhật (hoặc đến Thứ 4 tuần sau nếu ngày là T7/CN).</p>
+
+    <div class="cal-controls">
+      <input class="date-input" type="date" id="calDate" />
+      <div class="week-label" id="weekLabel">—</div>
+      <button class="btn btn-secondary" id="loadCalBtn">
+        <span class="btn-icon">🔄</span> Tải lịch
+      </button>
+    </div>
+
+    <div class="export-bar">
+      <button class="btn btn-secondary" id="exportImgBtn">
+        <span class="btn-icon">📷</span> Xuất ảnh JPG
+      </button>
+    </div>
+
+    <div id="scheduleContainer">
+      <div class="loading-state" id="calPlaceholder">
+        <span>Chọn ngày và bấm Tải lịch</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <h3 id="dialogTitle">Xác nhận</h3>
+    <p id="dialogMsg"></p>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" id="dialogCancel">Huỷ</button>
+      <button class="btn btn-primary" id="dialogOk">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- html2canvas for export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+// ────────────────────────────────────────────
+//  CONFIG
+// ────────────────────────────────────────────
+const STORAGE_KEY = 'cosplay_sheet_url';
+
+function getSheetUrl() {
+  const saved = localStorage.getItem(STORAGE_KEY) || '';
+  const input = document.getElementById('sheetUrl');
+  if (saved && !input.value) input.value = saved;
+  return input.value.trim();
+}
+
+document.getElementById('sheetUrl').addEventListener('change', function() {
+  localStorage.setItem(STORAGE_KEY, this.value.trim());
+});
+// Restore saved URL
+(function() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) document.getElementById('sheetUrl').value = saved;
+})();
+
+// ────────────────────────────────────────────
+//  TABS
+// ────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + target));
+    if (target === 'calendar') initCalendar();
+  });
+});
+
+// ────────────────────────────────────────────
+//  PARSE DATA
+// ────────────────────────────────────────────
+function getCurrentYear() { return new Date().getFullYear(); }
+
+function parseDate(str) {
+  // Accepts d/m or d/m/yyyy
+  const parts = str.trim().split('/');
+  if (parts.length < 2) return str.trim();
+  const d = parts[0].padStart(2,'0');
+  const m = parts[1].padStart(2,'0');
+  const y = parts[2] ? parts[2] : getCurrentYear();
+  return `${d}/${m}/${y}`;
+}
+
+function parseEntry(raw) {
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (!lines.length) return [];
+
+  // Line 1: "Name - date"
+  const line1 = lines[0];
+  const dashIdx = line1.lastIndexOf(' - ');
+  let name = '', date = '';
+  if (dashIdx !== -1) {
+    name = line1.slice(0, dashIdx).trim();
+    date = parseDate(line1.slice(dashIdx + 3).trim());
+  } else {
+    name = line1.trim();
+    date = '';
+  }
+
+  // Find "Cọc" line
+  let cocIdx = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (/^cọc/i.test(lines[i])) { cocIdx = i; break; }
+  }
+
+  let deposit = '0';
+  let items = [];
+  let notes = '';
+
+  if (cocIdx === -1) {
+    // No "Cọc" line => everything from line2 onward is items
+    items = lines.slice(1);
+  } else {
+    items = lines.slice(1, cocIdx);
+    const cocLine = lines[cocIdx];
+    const cocMatch = cocLine.match(/cọc\s*(\d[\d.,]*)/i);
+    deposit = cocMatch ? cocMatch[1] : '0';
+    const afterCoc = lines.slice(cocIdx + 1);
+    notes = afterCoc.join(' | ');
+  }
+
+  if (!items.length) return [];
+
+  return items.map(item => ({
+    colA: name,
+    colD: deposit,
+    colE: date,
+    colF: item,
+    colG: notes
+  }));
+}
+
+// ────────────────────────────────────────────
+//  ENTRY BLOCKS (SUBMIT TAB)
+// ────────────────────────────────────────────
+let entryCount = 0;
+
+function createEntry() {
+  entryCount++;
+  const id = entryCount;
+  const block = document.createElement('div');
+  block.className = 'entry-block';
+  block.dataset.id = id;
+  block.innerHTML = `
+    <div class="entry-header">
+      <span class="entry-num">Slot #${id}</span>
+      <button class="entry-remove" title="Xoá slot này">✕</button>
+    </div>
+    <textarea class="entry-textarea" placeholder="Dán data vào đây...\nVí dụ:\nDung - 5/4\nMiku ori - Không giày\nCọc 100\nKhách tới lấy đồ"></textarea>
+    <div class="entry-preview" id="preview-${id}"></div>
+  `;
+  block.querySelector('.entry-remove').addEventListener('click', () => {
+    if (document.querySelectorAll('.entry-block').length <= 1) {
+      showToast('Phải giữ ít nhất 1 ô!', 'error'); return;
+    }
+    block.remove();
+  });
+  block.querySelector('.entry-textarea').addEventListener('input', function() {
+    updatePreview(id, this.value);
+  });
+  return block;
+}
+
+function updatePreview(id, text) {
+  const el = document.getElementById('preview-' + id);
+  if (!text.trim()) { el.innerHTML = ''; el.classList.remove('visible'); return; }
+  const rows = parseEntry(text);
+  if (!rows.length) { el.innerHTML = ''; el.classList.remove('visible'); return; }
+  const r = rows[0];
+  el.classList.add('visible');
+  el.innerHTML = `
+    <div class="preview-chip"><strong>Khách:</strong> ${r.colA}</div>
+    <div class="preview-chip"><strong>Ngày:</strong> ${r.colE}</div>
+    <div class="preview-chip"><strong>Cọc:</strong> ${r.colD}</div>
+    <div class="preview-chip"><strong>${rows.length} đồ</strong></div>
+    ${r.colG ? `<div class="preview-chip"><strong>Note:</strong> ${r.colG}</div>` : ''}
+  `;
+}
+
+function initEntries() {
+  const wrapper = document.getElementById('entriesWrapper');
+  wrapper.innerHTML = '';
+  entryCount = 0;
+  wrapper.appendChild(createEntry());
+}
+
+document.getElementById('addEntryBtn').addEventListener('click', () => {
+  document.getElementById('entriesWrapper').appendChild(createEntry());
+});
+
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  showConfirm('Xoá tất cả?', 'Tất cả slot sẽ bị xoá và reset về 1 ô trống.', () => {
+    initEntries();
+    showToast('Đã xoá!', 'info');
+  });
+});
+
+// ────────────────────────────────────────────
+//  SUBMIT
+// ────────────────────────────────────────────
+document.getElementById('submitAllBtn').addEventListener('click', async () => {
+  const url = getSheetUrl();
+  if (!url) { showToast('Nhập URL Google Sheet App trước!', 'error'); return; }
+
+  const textareas = document.querySelectorAll('.entry-textarea');
+  let allRows = [];
+  let hasContent = false;
+
+  textareas.forEach(ta => {
+    const text = ta.value.trim();
+    if (!text) return;
+    hasContent = true;
+    const rows = parseEntry(text);
+    allRows = allRows.concat(rows);
+  });
+
+  if (!hasContent) { showToast('Chưa có data nào!', 'error'); return; }
+  if (!allRows.length) { showToast('Không parse được data. Kiểm tra lại định dạng!', 'error'); return; }
+
+  const btn = document.getElementById('submitAllBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Đang gửi ${allRows.length} dòng…`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: allRows })
+    });
+    showToast(`✅ Đã gửi ${allRows.length} dòng lên Sheet!`, 'success');
+    showConfirm('Gửi thành công!', `${allRows.length} dòng đã được import. Bạn có muốn xoá các slot đã nhập không?`, () => {
+      initEntries();
+    });
+  } catch(e) {
+    showToast('Lỗi kết nối. Kiểm tra URL!', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="btn-icon">🚀</span> Gửi lên Google Sheet`;
+  }
+});
+
+// ────────────────────────────────────────────
+//  CALENDAR
+// ────────────────────────────────────────────
+const DAY_NAMES = ['CN','T2','T3','T4','T5','T6','T7'];
+const DAY_FULL  = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+
+function getWeekRange(date) {
+  const d = new Date(date);
+  const dow = d.getDay(); // 0=Sun, 1=Mon
+  let mon, sun;
+  if (dow === 0 || dow === 6) {
+    // Weekend: Mon of this week → Thu of next week
+    const daysToMon = dow === 0 ? -6 : -5;
+    mon = new Date(d); mon.setDate(d.getDate() + daysToMon);
+    sun = new Date(mon); sun.setDate(mon.getDate() + 10); // Mon+10 = Thu next week
+  } else {
+    // Weekday: Mon to Sun of this week
+    const daysToMon = -(dow - 1);
+    mon = new Date(d); mon.setDate(d.getDate() + daysToMon);
+    sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  }
+  return { start: mon, end: sun };
+}
+
+function fmtDate(d) {
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+function fmtDateKey(d) {
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+function enumerateDays(start, end) {
+  const days = [];
+  const cur = new Date(start);
+  while (cur <= end) {
+    days.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return days;
+}
+
+let lastCalData = null;
+
+async function loadCalendar() {
+  const url = getSheetUrl();
+  if (!url) { showToast('Nhập URL Google Sheet App trước!', 'error'); return; }
+
+  const dateInput = document.getElementById('calDate').value;
+  if (!dateInput) { showToast('Chọn ngày trước!', 'error'); return; }
+
+  const picked = new Date(dateInput);
+  const { start, end } = getWeekRange(picked);
+
+  document.getElementById('weekLabel').textContent =
+    `${fmtDate(start)} — ${fmtDate(end)}`;
+
+  const container = document.getElementById('scheduleContainer');
+  container.innerHTML = `<div class="loading-state"><div class="spinner"></div> Đang tải lịch…</div>`;
+
+  try {
+    const res = await fetch(`${url}?action=getSchedule&from=${fmtDateKey(start)}&to=${fmtDateKey(end)}`);
+    const data = await res.json();
+    lastCalData = { data, start, end };
+    renderCalendar(data, start, end);
+  } catch(e) {
+    container.innerHTML = `<div class="loading-state">❌ Lỗi tải dữ liệu. Kiểm tra URL và kết nối.</div>`;
+    console.error(e);
+  }
+}
+
+function renderCalendar(data, start, end) {
+  const container = document.getElementById('scheduleContainer');
+  const rows = data.rows || [];
+
+  const fromShort = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}`;
+  const toShort   = `${String(end.getDate()).padStart(2,'0')}/${String(end.getMonth()+1).padStart(2,'0')}`;
+
+  let bodyHtml = '';
+  if (!rows.length) {
+    bodyHtml = `<tr><td colspan="3" class="empty-table">— Không có lịch nào trong tuần này —</td></tr>`;
+  } else {
+    rows.forEach(r => {
+      const parts = (r.colE || '').split('/');
+      const d = parseInt(parts[0] || 0, 10);
+      const m = parseInt(parts[1] || 1, 10) - 1;
+      const y = parseInt(parts[2] || getCurrentYear(), 10);
+      const dateObj = new Date(y, m, d);
+      const dow = dateObj.getDay();
+      const isWeekend = dow === 0 || dow === 6;
+      const dayLabel = `${String(d).padStart(2,'0')}/${String(m+1).padStart(2,'0')} (${DAY_FULL[dow]})`;
+
+      bodyHtml += `
+        <tr>
+          <td class="td-date" style="${isWeekend ? 'color:var(--pink)' : ''}">${dayLabel}</td>
+          <td class="td-name">${r.colA || ''}</td>
+          <td class="td-detail">
+            <div class="detail-item">${r.colF || ''}</div>
+            ${r.colG ? `<div class="detail-note">📅 ${r.colG}</div>` : ''}
+          </td>
+        </tr>`;
+    });
+  }
+
+  container.innerHTML = `
+    <div class="schedule-wrap" id="scheduleGrid">
+      <div class="schedule-meta">
+        <div class="schedule-meta-title">BẢNG TỔNG HỢP LỊCH SLOT TRONG TUẦN</div>
+        <div class="schedule-meta-range">Từ ${fromShort} đến ${toShort}</div>
+        <div class="schedule-meta-count">Tổng cộng tuần này: <strong>${rows.length}</strong> slot</div>
+      </div>
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th>Ngày (Thứ)</th>
+            <th>Tên khách</th>
+            <th>Chi tiết đồ &amp; Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+function initCalendar() {
+  const inp = document.getElementById('calDate');
+  if (!inp.value) {
+    const today = new Date();
+    inp.value = today.toISOString().split('T')[0];
+    const { start, end } = getWeekRange(today);
+    document.getElementById('weekLabel').textContent = `${fmtDate(start)} — ${fmtDate(end)}`;
+  }
+}
+
+document.getElementById('calDate').addEventListener('change', function() {
+  const { start, end } = getWeekRange(new Date(this.value));
+  document.getElementById('weekLabel').textContent = `${fmtDate(start)} — ${fmtDate(end)}`;
+});
+
+document.getElementById('loadCalBtn').addEventListener('click', loadCalendar);
+
+// ────────────────────────────────────────────
+//  EXPORT IMAGE
+// ────────────────────────────────────────────
+document.getElementById('exportImgBtn').addEventListener('click', async () => {
+  const grid = document.getElementById('scheduleGrid');
+  if (!grid) { showToast('Tải lịch trước đã!', 'error'); return; }
+
+  const btn = document.getElementById('exportImgBtn');
+  btn.disabled = true; btn.innerHTML = `<div class="spinner"></div> Đang xuất…`;
+
+  try {
+    const canvas = await html2canvas(grid, {
+      backgroundColor: '#12121a',
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+    const link = document.createElement('a');
+    link.download = `lich-thue-do-${document.getElementById('calDate').value}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.92);
+    link.click();
+    showToast('📷 Đã xuất ảnh!', 'success');
+  } catch(e) {
+    showToast('Xuất ảnh thất bại!', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="btn-icon">📷</span> Xuất ảnh JPG`;
+  }
+});
+
+// ────────────────────────────────────────────
+//  TOAST
+// ────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
+
+// ────────────────────────────────────────────
+//  CONFIRM DIALOG
+// ────────────────────────────────────────────
+let confirmCb = null;
+function showConfirm(title, msg, cb) {
+  document.getElementById('dialogTitle').textContent = title;
+  document.getElementById('dialogMsg').textContent = msg;
+  confirmCb = cb;
+  document.getElementById('overlay').classList.add('show');
+}
+document.getElementById('dialogCancel').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  confirmCb = null;
+});
+document.getElementById('dialogOk').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  if (confirmCb) { confirmCb(); confirmCb = null; }
+});
+
+// ────────────────────────────────────────────
+//  INIT
+// ────────────────────────────────────────────
+initEntries();
+</script>
+</body>
+</html>
