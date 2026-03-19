@@ -597,16 +597,16 @@ document.getElementById('submitAllBtn').addEventListener('click', async () => {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: allRows })
     });
+    const result = await res.json();
+    if (result.status !== 'success') throw new Error(result.message || 'Lỗi không xác định');
     showToast(`✅ Đã gửi ${allRows.length} dòng lên Sheet!`, 'success');
     showConfirm('Gửi thành công!', `${allRows.length} dòng đã được import. Bạn có muốn xoá các slot đã nhập không?`, () => {
       initEntries();
     });
   } catch(e) {
-    showToast('Lỗi kết nối. Kiểm tra URL!', 'error');
+    showToast(`Lỗi: ${e.message || 'Kiểm tra URL và kết nối!'}`, 'error');
     console.error(e);
   } finally {
     btn.disabled = false;

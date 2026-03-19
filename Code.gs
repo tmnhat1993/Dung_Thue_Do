@@ -44,13 +44,13 @@ function doPost(e) {
 
     rows.forEach((row) => {
       const newRow = [
-        row.colA || "", // Cột A: Tên khách
-        "", // Cột B: (để trống)
-        "", // Cột C: (để trống)
-        row.colD || "0", // Cột D: Cọc
-        row.colE || "", // Cột E: Ngày thuê
-        row.colF || "", // Cột F: Tên đồ
-        row.colG || "", // Cột G: Ghi chú
+        row.colA || "",              // Cột A: Tên khách
+        "",                          // Cột B: (để trống)
+        "",                          // Cột C: (để trống)
+        row.colD || "0",             // Cột D: Cọc
+        parseDateToObj(row.colE),    // Cột E: Ngày thuê — lưu dạng Date object
+        row.colF || "",              // Cột F: Tên đồ
+        row.colG || "",              // Cột G: Ghi chú
       ];
       sheet.appendRow(newRow);
       inserted.push(newRow);
@@ -150,7 +150,22 @@ function getSheet() {
 }
 
 /**
- * Parse "dd/mm/yyyy" → Date object
+ * Parse "dd/mm/yyyy" string → Date object để lưu vào Google Sheets
+ * Tránh lỗi JS tự parse "dd/mm/yyyy" thành mm/dd
+ */
+function parseDateToObj(str) {
+  if (!str) return '';
+  const parts = String(str).trim().split('/');
+  if (parts.length < 3) return str;
+  const d = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const y = parseInt(parts[2], 10);
+  const dt = new Date(y, m, d);
+  return isNaN(dt.getTime()) ? str : dt;
+}
+
+/**
+ * Parse "dd/mm/yyyy" → Date object (dùng cho so sánh ngày)
  */
 function parseSheetDate(str) {
   if (!str) return null;
