@@ -9,6 +9,7 @@ SITE="$(mktemp -d)"
 trap 'rm -rf "$SITE"' EXIT
 
 cp index.html "$SITE/"
+touch "$SITE/.nojekyll"
 if [[ -f README.md ]]; then cp README.md "$SITE/"; fi
 if [[ -f HUONG_DAN.md ]]; then cp HUONG_DAN.md "$SITE/"; fi
 
