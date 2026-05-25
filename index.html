@@ -304,6 +304,30 @@
     .dialog p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6; }
     .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+    /* Submit tab — password gate */
+    .submit-gate {
+      max-width: 420px; margin: 48px auto 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px 28px; text-align: center;
+    }
+    .submit-gate h3 {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 18px; margin-bottom: 8px;
+    }
+    .submit-gate p {
+      font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6;
+    }
+    .submit-gate-row {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    }
+    .submit-gate-row .config-input {
+      min-width: 180px; flex: 1; max-width: 260px; text-align: center;
+    }
+    .submit-gate-error {
+      margin-top: 12px; font-size: 13px; color: var(--error);
+      min-height: 1.2em;
+    }
+
     /* Mobile */
     @media (max-width: 640px) {
       .logo { font-size: 15px; }
@@ -324,16 +348,49 @@
   <div class="header-inner">
     <div class="logo">Cosplay <span>Rental</span></div>
     <div class="tabs">
-      <button class="tab-btn active" data-tab="submit">📋 Nhập liệu</button>
-      <button class="tab-btn" data-tab="search">🔍 Tra cứu đồ</button>
+      <button class="tab-btn active" data-tab="search">🔍 Tra cứu đồ</button>
+      <button class="tab-btn" data-tab="submit">📋 Nhập liệu</button>
       <button class="tab-btn" data-tab="calendar">📅 Lịch slot</button>
     </div>
   </div>
 </header>
 
-<!-- ======================== SUBMIT TAB ======================== -->
-<div class="tab-panel active" id="tab-submit">
+<!-- ======================== SEARCH TAB ======================== -->
+<div class="tab-panel active" id="tab-search">
   <div class="container">
+    <div class="section-title">Tra cứu đồ theo tên</div>
+    <p class="section-sub">Nhập tên bộ đồ (vd: <strong>Yuzuha</strong>) — khớp cả dòng dạng <em>Yuzuha (balo, dù, giày)</em>. Hiển thị các slot từ ngày chọn trở đi.</p>
+
+    <div class="cal-controls">
+      <input class="config-input" type="text" id="searchName" placeholder="Tên đồ (vd: Yuzuha)" style="min-width:200px;flex:1;" />
+      <input class="date-input" type="date" id="searchDate" />
+      <button class="btn btn-primary" id="searchBtn">
+        <span class="btn-icon">🔍</span> Tìm kiếm
+      </button>
+    </div>
+
+    <div id="searchContainer">
+      <div class="loading-state" id="searchPlaceholder">
+        <span>Nhập tên đồ và bấm Tìm kiếm</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SUBMIT TAB ======================== -->
+<div class="tab-panel" id="tab-submit">
+  <div class="container">
+    <div class="submit-gate" id="submitGate">
+      <h3>Nhập liệu (nội bộ)</h3>
+      <p>Khu vực nhập dữ liệu được khóa. Mở khóa trong 3 ngày trên trình duyệt này.</p>
+      <div class="submit-gate-row">
+        <input class="config-input" type="password" id="submitPassword" placeholder="Mật khẩu" autocomplete="off" />
+        <button class="btn btn-primary" type="button" id="submitUnlockBtn">Mở khóa</button>
+      </div>
+      <div class="submit-gate-error" id="submitGateError" aria-live="polite"></div>
+    </div>
+
+    <div id="submitContent" hidden>
     <div class="section-title">Nhập liệu thuê đồ</div>
     <p class="section-sub">Paste data từng slot vào ô bên dưới. Mỗi ô là một đơn thuê riêng.</p>
 
@@ -359,27 +416,6 @@
         🗑 Xoá tất cả
       </button>
     </div>
-  </div>
-</div>
-
-<!-- ======================== SEARCH TAB ======================== -->
-<div class="tab-panel" id="tab-search">
-  <div class="container">
-    <div class="section-title">Tra cứu đồ theo tên</div>
-    <p class="section-sub">Nhập tên bộ đồ (vd: <strong>Yuzuha</strong>) — khớp cả dòng dạng <em>Yuzuha (balo, dù, giày)</em>. Hiển thị các slot từ ngày chọn trở đi.</p>
-
-    <div class="cal-controls">
-      <input class="config-input" type="text" id="searchName" placeholder="Tên đồ (vd: Yuzuha)" style="min-width:200px;flex:1;" />
-      <input class="date-input" type="date" id="searchDate" />
-      <button class="btn btn-primary" id="searchBtn">
-        <span class="btn-icon">🔍</span> Tìm kiếm
-      </button>
-    </div>
-
-    <div id="searchContainer">
-      <div class="loading-state" id="searchPlaceholder">
-        <span>Nhập tên đồ và bấm Tìm kiếm</span>
-      </div>
     </div>
   </div>
 </div>
@@ -435,6 +471,9 @@
 // ────────────────────────────────────────────
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyrHvXfP39L4wu1G64TmrmczBi1TaaGvKN4c5CcfVcMjQHU3EsblNmvVAEptK_xS8oK/exec';
 const STORAGE_KEY = 'cosplay_sheet_url';
+const SUBMIT_UNLOCK_KEY = 'cosplay_submit_unlocked_at';
+const SUBMIT_UNLOCK_MS = 3 * 24 * 60 * 60 * 1000;
+const SUBMIT_PASSWORD = '....';
 
 function getSheetUrl() {
   const input = document.getElementById('sheetUrl');
@@ -460,8 +499,56 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + target));
     if (target === 'calendar') initCalendar();
     if (target === 'search') initSearch();
+    if (target === 'submit') updateSubmitGateUI();
   });
 });
+
+// ────────────────────────────────────────────
+//  SUBMIT TAB — PASSWORD GATE (3 ngày / trình duyệt)
+// ────────────────────────────────────────────
+function isSubmitUnlocked() {
+  const raw = localStorage.getItem(SUBMIT_UNLOCK_KEY);
+  if (!raw) return false;
+  const unlockedAt = parseInt(raw, 10);
+  if (!Number.isFinite(unlockedAt)) return false;
+  return Date.now() - unlockedAt < SUBMIT_UNLOCK_MS;
+}
+
+function setSubmitUnlocked() {
+  localStorage.setItem(SUBMIT_UNLOCK_KEY, String(Date.now()));
+}
+
+function updateSubmitGateUI() {
+  const gate = document.getElementById('submitGate');
+  const content = document.getElementById('submitContent');
+  const unlocked = isSubmitUnlocked();
+  gate.hidden = unlocked;
+  content.hidden = !unlocked;
+}
+
+function tryUnlockSubmit() {
+  const input = document.getElementById('submitPassword');
+  const errEl = document.getElementById('submitGateError');
+  const value = input.value;
+  if (value !== SUBMIT_PASSWORD) {
+    errEl.textContent = 'Mật khẩu không đúng.';
+    input.focus();
+    return;
+  }
+  setSubmitUnlocked();
+  errEl.textContent = '';
+  input.value = '';
+  updateSubmitGateUI();
+  showToast('Đã mở khóa nhập liệu (3 ngày)', 'success');
+}
+
+function initSubmitGate() {
+  updateSubmitGateUI();
+  document.getElementById('submitUnlockBtn').addEventListener('click', tryUnlockSubmit);
+  document.getElementById('submitPassword').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') tryUnlockSubmit();
+  });
+}
 
 // ────────────────────────────────────────────
 //  PARSE DATA
@@ -952,6 +1039,7 @@ document.getElementById('dialogOk').addEventListener('click', () => {
 // ────────────────────────────────────────────
 //  INIT
 // ────────────────────────────────────────────
+initSubmitGate();
 initEntries();
 initSearch();
 </script>
