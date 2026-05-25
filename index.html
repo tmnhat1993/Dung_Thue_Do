@@ -325,6 +325,7 @@
     <div class="logo">Cosplay <span>Rental</span></div>
     <div class="tabs">
       <button class="tab-btn active" data-tab="submit">📋 Nhập liệu</button>
+      <button class="tab-btn" data-tab="search">🔍 Tra cứu đồ</button>
       <button class="tab-btn" data-tab="calendar">📅 Lịch slot</button>
     </div>
   </div>
@@ -357,6 +358,28 @@
       <button class="btn btn-danger" id="clearAllBtn" style="margin-left:auto;">
         🗑 Xoá tất cả
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SEARCH TAB ======================== -->
+<div class="tab-panel" id="tab-search">
+  <div class="container">
+    <div class="section-title">Tra cứu đồ theo tên</div>
+    <p class="section-sub">Nhập tên bộ đồ (vd: <strong>Yuzuha</strong>) — khớp cả dòng dạng <em>Yuzuha (balo, dù, giày)</em>. Hiển thị các slot từ ngày chọn trở đi.</p>
+
+    <div class="cal-controls">
+      <input class="config-input" type="text" id="searchName" placeholder="Tên đồ (vd: Yuzuha)" style="min-width:200px;flex:1;" />
+      <input class="date-input" type="date" id="searchDate" />
+      <button class="btn btn-primary" id="searchBtn">
+        <span class="btn-icon">🔍</span> Tìm kiếm
+      </button>
+    </div>
+
+    <div id="searchContainer">
+      <div class="loading-state" id="searchPlaceholder">
+        <span>Nhập tên đồ và bấm Tìm kiếm</span>
+      </div>
     </div>
   </div>
 </div>
@@ -436,6 +459,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + target));
     if (target === 'calendar') initCalendar();
+    if (target === 'search') initSearch();
   });
 });
 
@@ -756,6 +780,115 @@ document.getElementById('calDate').addEventListener('change', function() {
 document.getElementById('loadCalBtn').addEventListener('click', loadCalendar);
 
 // ────────────────────────────────────────────
+//  SEARCH ITEMS
+// ────────────────────────────────────────────
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function initSearch() {
+  const inp = document.getElementById('searchDate');
+  if (!inp.value) {
+    inp.value = new Date().toISOString().split('T')[0];
+  }
+}
+
+async function loadSearch() {
+  const url = getSheetUrl();
+  if (!url) { showToast('Nhập URL Google Sheet App trước!', 'error'); return; }
+
+  const nameQuery = document.getElementById('searchName').value.trim();
+  if (!nameQuery) { showToast('Nhập tên đồ cần tìm!', 'error'); return; }
+
+  const dateInput = document.getElementById('searchDate').value;
+  if (!dateInput) { showToast('Chọn ngày trước!', 'error'); return; }
+
+  const picked = new Date(dateInput);
+  const fromStr = fmtDateKey(picked);
+
+  const container = document.getElementById('searchContainer');
+  container.innerHTML = `<div class="loading-state"><div class="spinner"></div> Đang tìm…</div>`;
+
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+
+  try {
+    const params = new URLSearchParams({
+      action: 'searchItems',
+      name: nameQuery,
+      from: fromStr,
+    });
+    const res = await fetch(`${url}?${params.toString()}`);
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'Lỗi không xác định');
+    renderSearchResults(data, nameQuery, fromStr);
+  } catch (e) {
+    container.innerHTML = `<div class="loading-state">❌ Lỗi: ${e.message || 'Kiểm tra URL và kết nối.'}</div>`;
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderSearchResults(data, nameQuery, fromStr) {
+  const container = document.getElementById('searchContainer');
+  const rows = data.rows || [];
+
+  let bodyHtml = '';
+  if (!rows.length) {
+    bodyHtml = `<tr><td colspan="4" class="empty-table">— Không có slot nào cho "<strong>${escapeHtml(nameQuery)}</strong>" từ ${escapeHtml(fromStr)} trở đi —</td></tr>`;
+  } else {
+    rows.forEach(r => {
+      const parts = (r.colE || '').split('/');
+      const d = parseInt(parts[0] || 0, 10);
+      const m = parseInt(parts[1] || 1, 10) - 1;
+      const y = parseInt(parts[2] || getCurrentYear(), 10);
+      const dateObj = new Date(y, m, d);
+      const dow = dateObj.getDay();
+      const isWeekend = dow === 0 || dow === 6;
+      const dayLabel = `${String(d).padStart(2,'0')}/${String(m+1).padStart(2,'0')} (${DAY_FULL[dow]})`;
+
+      bodyHtml += `
+        <tr>
+          <td class="td-date" style="${isWeekend ? 'color:var(--pink)' : ''}">${dayLabel}</td>
+          <td class="td-name">${escapeHtml(r.colA || '')}</td>
+          <td class="td-detail"><div class="detail-item">${escapeHtml(r.colF || '')}</div></td>
+          <td class="td-detail">${r.colG ? `<div class="detail-note">📅 ${escapeHtml(r.colG)}</div>` : '—'}</td>
+        </tr>`;
+    });
+  }
+
+  container.innerHTML = `
+    <div class="schedule-wrap" id="searchGrid">
+      <div class="schedule-meta">
+        <div class="schedule-meta-title">KẾT QUẢ TRA CỨU: ${escapeHtml(nameQuery.toUpperCase())}</div>
+        <div class="schedule-meta-range">Từ ngày ${escapeHtml(fromStr)} trở đi</div>
+        <div class="schedule-meta-count">Tìm thấy: <strong>${rows.length}</strong> slot</div>
+      </div>
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th>Ngày (Thứ)</th>
+            <th>Tên khách</th>
+            <th>Tên đồ</th>
+            <th>Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+document.getElementById('searchBtn').addEventListener('click', loadSearch);
+document.getElementById('searchName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') loadSearch();
+});
+
+// ────────────────────────────────────────────
 //  EXPORT IMAGE
 // ────────────────────────────────────────────
 document.getElementById('exportImgBtn').addEventListener('click', async () => {
@@ -820,6 +953,7 @@ document.getElementById('dialogOk').addEventListener('click', () => {
 //  INIT
 // ────────────────────────────────────────────
 initEntries();
+initSearch();
 </script>
 </body>
 </html>

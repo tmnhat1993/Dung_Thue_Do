@@ -20,6 +20,10 @@ function doGet(e) {
     return handleGetSchedule(e);
   }
 
+  if (action === "searchItems") {
+    return handleSearchItems(e);
+  }
+
   // Mặc định: trả về thông tin kiểm tra kết nối
   return jsonResponse({
     status: "ok",
@@ -127,6 +131,70 @@ function handleGetSchedule(e) {
 }
 
 // ============================================================
+//  Tra cứu đồ theo tên (khớp một phần) từ ngày trở đi
+// ============================================================
+function handleSearchItems(e) {
+  try {
+    const nameQuery = (e.parameter.name || "").trim();
+    const fromStr = e.parameter.from || "";
+
+    if (!nameQuery) {
+      return jsonResponse({ status: "error", message: "Thiếu tên đồ cần tìm" });
+    }
+    if (!fromStr) {
+      return jsonResponse({ status: "error", message: "Thiếu ngày bắt đầu" });
+    }
+
+    const fromDate = parseSheetDate(fromStr);
+    if (!fromDate) {
+      return jsonResponse({ status: "error", message: "Ngày không hợp lệ" });
+    }
+
+    const needle = normalizeSearchText(nameQuery);
+    const sheet = getSheet();
+    const data = sheet.getDataRange().getValues();
+    const rows = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const itemName = String(row[5] || "");
+      if (!itemName) continue;
+      if (!normalizeSearchText(itemName).includes(needle)) continue;
+
+      const dateVal = row[4];
+      if (!dateVal) continue;
+
+      let rowDate;
+      if (dateVal instanceof Date) {
+        rowDate = dateVal;
+      } else {
+        rowDate = parseSheetDate(String(dateVal));
+      }
+      if (!rowDate || rowDate < fromDate) continue;
+
+      rows.push({
+        colA: row[0] || "",
+        colD: row[3] || "",
+        colE: formatDateForUI(rowDate),
+        colF: itemName,
+        colG: row[6] || "",
+      });
+    }
+
+    rows.sort((a, b) => parseSheetDate(a.colE) - parseSheetDate(b.colE));
+
+    return jsonResponse({
+      status: "success",
+      query: nameQuery,
+      from: fromStr,
+      rows,
+    });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: err.toString() });
+  }
+}
+
+// ============================================================
 //  HELPERS
 // ============================================================
 
@@ -187,6 +255,15 @@ function formatDateForUI(date) {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const y = date.getFullYear();
   return `${d}/${m}/${y}`;
+}
+
+/** Chuẩn hoá chuỗi để so khớp tên đồ (không phân biệt hoa thường) */
+function normalizeSearchText(str) {
+  return String(str)
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 /**

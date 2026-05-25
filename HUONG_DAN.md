@@ -119,6 +119,16 @@ Khách tới lấy đồ
 
 ---
 
+## Cách dùng Tab Tra cứu đồ
+
+1. Nhập **tên đồ** (vd: `Yuzuha`) — chỉ cần một phần tên, khớp cả dòng dạng `Yuzuha (balo, dù, giày)`
+2. Chọn **ngày bắt đầu** (mặc định là hôm nay)
+3. Bấm **Tìm kiếm** — hiển thị tất cả slot của bộ đó từ ngày đó trở đi
+
+> Sau khi cập nhật `Code.gs`, cần **Deploy lại** Web App thì API tra cứu mới hoạt động.
+
+---
+
 ## Cách dùng Tab Lịch slot
 
 1. Chọn ngày bất kỳ trong tuần muốn xem

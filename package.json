@@ -1,0 +1,8 @@
+{
+  "name": "dung-thue-do",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 5178",
+    "deploy": "bash scripts/push-deploy.sh"
+  }
+}
