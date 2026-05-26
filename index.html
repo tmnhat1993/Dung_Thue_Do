@@ -101,11 +101,15 @@
       display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
     }
     .config-bar label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    /* ≥16px trên input — tránh iOS Safari zoom khi focus */
+    input, textarea, select {
+      font-size: 16px;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
     .config-input {
       flex: 1; min-width: 220px;
       background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      padding: 9px 14px; color: var(--text); font-size: 13px;
-      font-family: 'Noto Sans JP', sans-serif;
+      padding: 9px 14px; color: var(--text);
       transition: border-color .2s;
     }
     .config-input:focus { outline: none; border-color: var(--accent); }
@@ -137,11 +141,11 @@
 
     .entry-textarea {
       width: 100%; min-height: 140px; background: transparent; border: none;
-      padding: 16px; color: var(--text); font-size: 14px; resize: vertical;
-      font-family: 'Noto Sans JP', sans-serif; line-height: 1.7;
+      padding: 16px; color: var(--text); resize: vertical;
+      line-height: 1.7;
     }
     .entry-textarea:focus { outline: none; }
-    .entry-textarea::placeholder { color: var(--text-muted); font-size: 13px; }
+    .entry-textarea::placeholder { color: var(--text-muted); }
 
     /* Preview */
     .entry-preview {
@@ -208,8 +212,7 @@
     }
     .date-input {
       background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-      padding: 10px 16px; color: var(--text); font-size: 14px;
-      font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+      padding: 10px 16px; color: var(--text); cursor: pointer;
     }
     .date-input:focus { outline: none; border-color: var(--accent); }
     .week-label {
